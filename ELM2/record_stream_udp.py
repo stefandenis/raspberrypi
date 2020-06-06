@@ -33,7 +33,7 @@ M_segments_ELM = 6
 
 sound_list = ['liniste','rostire']
 command_list = ['avarii', 'claxon', 'frana','hey_jarvis', 'inainte', 'inapoi', 'lumini', 'radio', 'start', 'stop']
-functions = ['avarii()','','frana(90)','','forward(90)','backward(90)','lumini()','','start(90)','stop()']
+functions = ['avarii()','','frana(90)','hey_jarvis()','forward(90)','backward(90)','lumini()','radio()','start(90)','stop()']
 
 
 LINISTE = 0

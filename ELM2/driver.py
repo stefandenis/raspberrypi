@@ -2,7 +2,13 @@ from time import sleep
 
 import RPi.GPIO as GPIO
 import os
+import socket
+from scipy.io import wavfile
+import time
+import wave
+sock=socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
 
+server_address2 = ('192.168.0.196',40000)
 
 avarii_flag = False 
 lumini_flag = False
@@ -101,4 +107,36 @@ def lumini():
 	lumini_flag = not lumini_flag
 	
 	GPIO.output(22,lumini_flag)
+
+def hey_jarvis():
+	BUFFER_SIZE = 1024	
+	global sock
+	global server_address2
+	wf = wave.open('/home/pi/Desktop/jarvis.wav','rb')
+	data = wf.readframes(BUFFER_SIZE)
+
+	sent = sock.sendto(data,server_address2)
+	while data != b'':
+		sent = sock.sendto(data,server_address2)    
+		response,addr = sock.recvfrom(1024)
+		data = wf.readframes(BUFFER_SIZE)
+
+
+def radio():
+	BUFFER_SIZE = 1024	
+	global sock
+	global server_address2
+	wf = wave.open('/home/pi/Desktop/radio.wav','rb')	
+	size = 0	
+	data = wf.readframes(BUFFER_SIZE)
+	size = size + BUFFER_SIZE
+	sent = sock.sendto(data,server_address2)
+	while data != b'':
+		sent = sock.sendto(data,server_address2)    
+		response,addr = sock.recvfrom(1024)
+		data = wf.readframes(BUFFER_SIZE)
+		size = size + BUFFER_SIZE
+		if size > 1600000:
+			break
+
 
