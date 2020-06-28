@@ -9,13 +9,14 @@ import wave
 sock=socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
 
 server_address2 = ('192.168.0.196',40000)
-
+sock.settimeout(0.1)
 avarii_flag = False 
 lumini_flag = False
 def init():
 	global pwm_lw
 	global pwm_rw	
 	GPIO.setmode(GPIO.BOARD)
+	GPIO.setwarnings(False)
 	PWM_lw_pin = 12
 	PWM_rw_pin = 13
 	GPIO.setup(PWM_lw_pin,GPIO.OUT)
@@ -114,13 +115,22 @@ def hey_jarvis():
 	global server_address2
 	wf = wave.open('/home/pi/Desktop/jarvis.wav','rb')
 	data = wf.readframes(BUFFER_SIZE)
-
 	sent = sock.sendto(data,server_address2)
-	while data != b'':
-		sent = sock.sendto(data,server_address2)    
-		response,addr = sock.recvfrom(1024)
-		data = wf.readframes(BUFFER_SIZE)
 
+	while data != b'':
+		try:	
+			sent = sock.sendto(data,server_address2)    
+			
+			data = wf.readframes(BUFFER_SIZE)
+			response,addr = sock.recvfrom(1024)
+		
+		except socket.timeout:
+						
+			pass			
+		
+	
+	sent = sock.sendto(b'OK',server_address2) 
+	
 
 def radio():
 	BUFFER_SIZE = 1024	
@@ -132,11 +142,35 @@ def radio():
 	size = size + BUFFER_SIZE
 	sent = sock.sendto(data,server_address2)
 	while data != b'':
-		sent = sock.sendto(data,server_address2)    
-		response,addr = sock.recvfrom(1024)
-		data = wf.readframes(BUFFER_SIZE)
-		size = size + BUFFER_SIZE
-		if size > 1600000:
-			break
+		try:
+			sent = sock.sendto(data,server_address2)    
+			data = wf.readframes(BUFFER_SIZE)
 
+			response,addr = sock.recvfrom(1024)
+			
+			
+			#print(size)		
+			
+			
+		except socket.timeout:
+			pass
+	sent = sock.sendto(b'OK',server_address2) 
 
+def claxon():
+	BUFFER_SIZE = 1024	
+	global sock
+	global server_address2
+	wf = wave.open('/home/pi/Desktop/claxon.wav','rb')
+	data = wf.readframes(BUFFER_SIZE)
+
+	sent = sock.sendto(data,server_address2)
+	while data != b'':
+		try:
+			sent = sock.sendto(data,server_address2)    
+			data = wf.readframes(BUFFER_SIZE)
+			response,addr = sock.recvfrom(1024)
+		except socket.timeout:
+			pass
+			
+	sent = sock.sendto(b'OK',server_address2)
+	

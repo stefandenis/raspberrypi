@@ -14,12 +14,12 @@ from elm_model import *
 import time as ti 
 
 
-speech = VoiceRecognition('commands/inainte/inainte_calculator2.wav',1024)
+speech = VoiceRecognition('commands/avarii/avarii_calculator2.wav',1024)
 
 command = sio.loadmat('sample.mat')
 sample = command['Sample']
 
-weights = sio.loadmat('io_weights.mat')
+weights = sio.loadmat('io_weights_50.mat')
 
 inW = weights['inW']
 outW = weights['outW']
@@ -27,30 +27,26 @@ tip = 3
 
 speech.signal_samples()
 speech.scale_samples()
-t1 = ti.time()
 speech.segmentation()
-trun = ti.time()-t1
-print("segmentation time: ",trun)
 
-print(np.size(speech.normalized_vector))
 
+
+
+
+RDT_matrix = speech.RDT(speech.signal, 1024,6)
+feature_vector = speech.feature_vector(RDT_matrix) 
+feature_vector_reshaped = np.reshape(feature_vector, (speech.nr_spectrum*speech.M_segments,1))
 t1 = ti.time()
-RDT_matrix = speech.RDT(speech.normalized_vector, 1024,6)
-trun = ti.time() - t1 
-print("timp rdt fara segmentare: ",trun)
+scores = elmPredict_optim(feature_vector_reshaped, inW, outW, tip)
+tfinal = ti.time()-t1
+label = np.argmax(scores)
 
-t1 = ti.time()
-RDT_matrix = speech.RDT(speech.signal,1024,6)
-trun = ti.time()-t1
-print("timp rdt semnal util ", trun) 
+print("timp pana la predictie: ", tfinal)
+
+print(label)
 
 
 '''
-
-scores = elmPredict_optim(sample, inW, outW, tip)
-label = np.argmax(scores)
-print(label)
-
 plt.subplot(211)
 plt.xlabel("samples magnitude")
 

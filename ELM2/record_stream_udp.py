@@ -18,7 +18,7 @@ from driver import *
 
 
 # ELM 
-io_weights_command = sio.loadmat("../ELM/io_weights.mat")
+io_weights_command = sio.loadmat("../ELM/io_weights_100000.mat")
 inW_command = io_weights_command["inW"]
 outW_command = io_weights_command["outW"]
 
@@ -33,7 +33,7 @@ M_segments_ELM = 6
 
 sound_list = ['liniste','rostire']
 command_list = ['avarii', 'claxon', 'frana','hey_jarvis', 'inainte', 'inapoi', 'lumini', 'radio', 'start', 'stop']
-functions = ['avarii()','','frana(90)','hey_jarvis()','forward(90)','backward(90)','lumini()','radio()','start(90)','stop()']
+functions = ['avarii()','claxon()','frana(50)','hey_jarvis()','forward(50)','backward(50)','lumini()','radio()','start(50)','stop()']
 
 
 LINISTE = 0
@@ -45,6 +45,11 @@ form_1 = pyaudio.paInt16
 samp_rate = 44100
 
 p = pyaudio.PyAudio()
+
+stream = p.open(format = pyaudio.paInt16,channels=chans,rate=48000,frames_per_buffer=4096,output=True)
+
+stream.start_stream()
+
 
 command_frames = np.empty((0,1))
 
@@ -61,11 +66,14 @@ sock.bind(server_address)
 os.system("python3 /home/pi/Desktop/safety.py &")
 
 init()
-
+jarvis_flag = 0
 while(True):
 	try:    
 		in_data,address = sock.recvfrom(8192)
 		#print(in_data)
+		if in_data:
+			print(".")
+		
 		if GPIO.input(35) == 1:
 			stop()
 
@@ -112,9 +120,29 @@ while(True):
 				Sample = np.reshape(feature_vector, (command.nr_spectrum*command.M_segments,1))  
 	
 				#print(np.shape(Sample))
+								
 				scores = elmPredict_optim(Sample, inW_command, outW_command, tip)
-				print(command_list[np.argmax(scores)])
+				
+				if jarvis_flag:
+					command_list[3] = 'Secventa vocala a fost mult prea scurta'
+					functions[3] = ''
+				print(command_list[np.argmax(scores)])					
+				
+				if np.argmax(scores) == 1 or np.argmax(scores) == 3:
+					#print("wait for response after song finished")								
+					sock.close()
+					#print("done")				
+				
 				exec(functions[np.argmax(scores)])
+				
+				if np.argmax(scores) == 1 or np.argmax(scores) == 3 or np.argmax(scores) == 7:				
+					time.sleep(1)					
+					sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)					
+					sock.bind(server_address)
+				if np.argmax(scores) == 3:
+					jarvis_flag = 1
+
+				
 			except ValueError:
 				print("Secventa vocala a fost mult prea scurta")
 	
@@ -125,9 +153,9 @@ while(True):
 		previous_label = label
 
 	except KeyboardInterrupt:
-		print("Bye Bye")
-		os.system("pkill -f safety.py")
-		break
+                print("Bye Bye")
+                os.system("pkill -f safety.py")
+                break
 GPIO.cleanup()
 
 
